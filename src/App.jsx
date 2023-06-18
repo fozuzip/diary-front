@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect, useMemo } from "react";
+import { AppShell, Header, Group, LoadingOverlay } from "@mantine/core";
+
+import DarkModeSwitch from "./components/DarkModeSwitch";
+import DateSlider from "./components/DateSlider";
+import Map from "./components/Map";
+import ErrorMessage from "./components/ErrorMessage";
+
+import { getCountryTemperatures } from "./utils/api";
+import useFetchOnMount from "./utils/useFetchOnMount";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [data, loading, error] = useFetchOnMount(getCountryTemperatures);
+  const [selectedDate, setSelectedDate] = useState(null);
+
+  const countries = useMemo(() => {
+    if (!data) return null;
+    return Object.keys(data);
+  }, [data]);
+  const dates = useMemo(() => {
+    if (!data) return null;
+    return Object.keys(data[countries[0]]);
+  }, [data]);
+
+  useEffect(() => {
+    if (dates && dates.length > 0) {
+      setSelectedDate(dates[0]);
+    }
+  }, [dates]);
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <LoadingOverlay visible={loading} overlayBlur={2} />
+      {error ? (
+        <ErrorMessage />
+      ) : (
+        <AppShell
+          padding="0"
+          header={
+            <Header height={60}>
+              <Group sx={{ height: "100%" }} px={20}>
+                <DateSlider
+                  selectedDate={selectedDate}
+                  dates={dates}
+                  onChange={setSelectedDate}
+                />
+
+                <DarkModeSwitch />
+              </Group>
+            </Header>
+          }
+        >
+          <Map tempratures={data} selectedDate={selectedDate} />
+        </AppShell>
+      )}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
