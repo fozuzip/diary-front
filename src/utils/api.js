@@ -1,90 +1,65 @@
+import axios from "axios";
 import moment from "moment";
+import { notifications } from "@mantine/notifications";
 
-function generateRandomData() {
-  const countryCodes = [
-    "AL",
-    "AN",
-    "AU",
-    "BO",
-    "BE",
-    "BU",
-    "HR",
-    "CY",
-    "EZ",
-    "DA",
-    "EN",
-    "FI",
-    "FR",
-    "GM",
-    "GR",
-    "HU",
-    "IC",
-    "EI",
-    "IT",
-    "KV",
-    "LG",
-    "LH",
-    "LU",
-    "MK",
-    "MT",
-    "MD",
-    "MN",
-    "NL",
-    "NO",
-    "PL",
-    "PO",
-    "RO",
-    "RI",
-    "LO",
-    "SI",
-    "SP",
-    "SW",
-    "SZ",
-    "UK",
-    "UP",
-    "RS",
-    "BO",
-    "MD",
-    "SM",
-    "IM",
-    "LI",
-    "MC",
-    "VA",
-  ];
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
 
-  // Define the start and end dates
-  const startDate = moment("1990-01-01");
-  const endDate = moment("2023-06-01");
-
-  let dates = [];
-
-  let currentDate = moment(startDate);
-
-  while (currentDate.isSameOrBefore(endDate, "month")) {
-    dates.push(currentDate.format("YYYY-MM-DD"));
-    currentDate.add(1, "month");
+// Add a request interceptor
+api.interceptors.request.use(
+  (config) => {
+    return config;
+  },
+  (error) => {
+    console.log("Request error:", error);
+    return Promise.reject(error);
   }
+);
 
-  return countryCodes.reduce(
-    (acc, country) => ({
-      ...acc,
-      [country]: dates.reduce(
-        (acc, date) => ({
-          ...acc,
-          [date]: {
-            averageTemp: Math.floor(Math.random() * 101),
-          },
-        }),
-        {}
-      ),
-    }),
-    {}
-  );
-}
+// Add a response interceptor
+api.interceptors.response.use(
+  (response) => {
+    // Modify response data if needed
+    return response;
+  },
+  (error) => {
+    console.log({ error });
+    const { message } = error;
+    notifications.show({
+      color: "red",
+      title: "Error",
+      message: message || "Something went wrong!",
+    });
+    return Promise.reject(error);
+  }
+);
 
-export async function getCountryTemperatures() {
-  return new Promise((resolve, reject) => {
-    const data = generateRandomData();
-    setTimeout(() => resolve(data), 1000);
-  });
-}
+export const getCountries = async () => {
+  const data = await api.get("/diary/other/countries").then((res) => res.data);
+  return data;
+};
+
+export const getEarliest = async () => {
+  const data = await api.get("/diary/other/earliest").then((res) => res.data);
+  return data;
+};
+
+export const getLatest = async () => {
+  const data = await api.get("/diary/other/latest").then((res) => res.data);
+  return data;
+};
+
+export const getMeasurements = async () => {
+  const data = await api
+    .get("/diary/other/measurements/")
+    .then((res) => res.data);
+  return data;
+};
+
+export const getAnalysis = async (params) => {
+  const data = await api
+    .get("/diary/analysis/data", { params })
+    .then((res) => res.data);
+  return data;
+};

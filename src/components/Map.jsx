@@ -1,4 +1,12 @@
-import { useMantineTheme } from "@mantine/core";
+import moment from "moment";
+import {
+  useMantineTheme,
+  Box,
+  ColorSwatch,
+  Group,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { useState, useEffect, useRef, useMemo } from "react";
 
 import {
@@ -16,8 +24,8 @@ const initalZoomParams = {
   zoom: 2.002266295581086,
 };
 
-const MIN_TEMP = -20;
-const MAX_TEMP = 60;
+const MIN_TEMP = 0;
+const MAX_TEMP = 25;
 const getColorForTemperature = (temp) => {
   //Clamp temperature to min max values
   const t = Math.min(Math.max(temp, MIN_TEMP), MAX_TEMP);
@@ -27,9 +35,8 @@ const getColorForTemperature = (temp) => {
   return "hsl(" + h + ", 100%, 50%)";
 };
 
-function MapWrapper({ tempratures, selectedDate }) {
-  const { colorScheme, colors, fn } = useMantineTheme();
-  console.log({ colorScheme, colors, gradient: fn.gradient() });
+function MapWrapper({ data, selectedDate }) {
+  const { colorScheme, colors } = useMantineTheme();
 
   const geographyTheme = useMemo(() => {
     if (colorScheme === "light") {
@@ -56,17 +63,57 @@ function MapWrapper({ tempratures, selectedDate }) {
     setZoomParams(initalZoomParams);
   }, []);
 
+  const mapData = useMemo(() => {
+    const mapData = {};
+    if (!data) return mapData;
+
+    for (const row of data) {
+      if (!mapData[row.country_name]) {
+        mapData[row.country_name] = {};
+      }
+      mapData[row.country_name][moment(row.time).format("YYYY-MM-DD")] =
+        row.value;
+    }
+    return mapData;
+  }, [data]);
+
   return (
-    <div ref={ref} style={{ width: "100%", height: "calc(100% - 10px)" }}>
+    <div
+      ref={ref}
+      style={{
+        width: "100%",
+        height: "calc(100% - 10px)",
+        position: "relative",
+      }}
+    >
+      <Box
+        sx={(theme) => ({
+          width: "200px",
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          padding: theme.spacing.md,
+          marginLeft: theme.spacing.lg,
+          marginBottom: theme.spacing.lg,
+        })}
+      >
+        <Stack spacing="md">
+          {[0, 5, 10, 15, 20, 25].map((temp) => (
+            <Group spacing="md">
+              <ColorSwatch color={getColorForTemperature(temp)} />
+              <Text fz="md">{temp} °C </Text>
+            </Group>
+          ))}
+        </Stack>
+      </Box>
       <ComposableMap width={width} height={height} projection="geoMercator">
         <ZoomableGroup {...zoomParams}>
           <Geographies geography={geoUrl}>
             {({ geographies }) =>
               geographies.map((geo) => {
-                const countryCode = geo.properties["Alpha-2"];
-
-                const avgTemp =
-                  tempratures?.[countryCode]?.[selectedDate]?.averageTemp;
+                const country = geo.properties.name;
+                console.log(country);
+                const avgTemp = mapData?.[country]?.[selectedDate];
 
                 return (
                   <Geography

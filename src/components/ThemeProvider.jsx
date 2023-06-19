@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MantineProvider, ColorSchemeProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 
 function ThemeProvider({ children }) {
   const [colorScheme, setColorScheme] = useState("dark");
@@ -16,6 +17,7 @@ function ThemeProvider({ children }) {
         withGlobalStyles
         withNormalizeCSS
       >
+        <Notifications />
         {children}
       </MantineProvider>
     </ColorSchemeProvider>

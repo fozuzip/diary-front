@@ -17,22 +17,40 @@ function DateSlider({ selectedDate, dates, onChange }) {
     [selectedDate, dates]
   );
 
+  const sliderMarks = useMemo(() => {
+    if (dates.length < 5) return [];
+    const percentiles = [0, 25, 50, 75, 100];
+    const roundedPercentiles = percentiles.map((percentile) =>
+      Math.round((percentile / 100) * sliderMax)
+    );
+    return roundedPercentiles.map((value) => ({
+      value,
+      label: moment(dates[value]).format("YYYY-MM"),
+    }));
+  });
+
   const updateDate = (value) => {
     onChange(dates[value]);
   };
 
   return (
     <>
-      <Text>{displayDate}</Text>
+      <Text sx={{ minWidth: "80px" }}>{displayDate}</Text>
       <Slider
         value={sliderValue}
         onChange={updateDate}
         min={0}
         max={sliderMax}
-        sx={{ flexGrow: 1 }}
         size="lg"
         thumbSize={14}
         label={null}
+        marks={sliderMarks}
+        sx={({ spacing }) => ({
+          flexGrow: 1,
+          marginLeft: spacing.xs,
+          marginRight: spacing.xs,
+        })}
+        styles={({ fontSizes }) => ({ markLabel: { fontSize: fontSizes.xs } })}
       />
     </>
   );
