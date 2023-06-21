@@ -1,95 +1,154 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { GeoJSON, MapContainer, TileLayer } from "react-leaflet";
+import { Box, ColorSwatch, Group, Modal, Stack, Text } from "@mantine/core";
+import "leaflet/dist/leaflet.css";
 import moment from "moment";
-import {
-  useMantineTheme,
-  Box,
-  ColorSwatch,
-  Group,
-  Stack,
-  Text,
-} from "@mantine/core";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { scaleLinear } from "d3-scale";
+import { interpolateRgb } from "d3-interpolate";
+import { getCountryFromCoordinates } from "../utils/api";
+import countriesJson from "../map.json";
 
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  ZoomableGroup,
-} from "react-simple-maps";
+const GRAFANA_URL = import.meta.env.VITE_GRAFANA_URL;
 
-const geoUrl =
-  "https://raw.githubusercontent.com/deldersveld/topojson/master/world-countries.json";
+function convertDateToGrafanaTime(dateString) {
+  const date = moment.utc(dateString, "YYYY-MM-DD");
+  const timestamp = date.valueOf();
+  return timestamp;
+}
 
-const initalZoomParams = {
-  center: [9.502771447726788, 25.100818733935455],
-  zoom: 2.002266295581086,
-};
-
-const MIN_TEMP = 0;
-const MAX_TEMP = 25;
-const getColorForTemperature = (temp) => {
-  //Clamp temperature to min max values
-  const t = Math.min(Math.max(temp, MIN_TEMP), MAX_TEMP);
-  const normalT = (t - MIN_TEMP) / (MAX_TEMP - MIN_TEMP);
-
-  var h = (1.0 - normalT) * 240;
-  return "hsl(" + h + ", 100%, 50%)";
-};
-
-function MapWrapper({ data, selectedDate }) {
-  const { colorScheme, colors } = useMantineTheme();
-
-  const geographyTheme = useMemo(() => {
-    if (colorScheme === "light") {
-      return {
-        fill: colors.gray[3],
-        stroke: colors.gray[5],
-      };
-    } else {
-      return {
-        fill: colors.dark[5],
-        stroke: colors.dark[7],
-      };
-    }
-  }, [colorScheme]);
-
-  const [height, setHeight] = useState(0);
-  const [width, setWidth] = useState(0);
-  const [zoomParams, setZoomParams] = useState({});
+function MapWrapper({ data, selectedDate, minTemperature, maxTemperature }) {
+  const [geoJsonData, setGeoJsonData] = useState(null);
+  const [mapData, setMapData] = useState({});
+  const [selectedCountryCode, setSelectedCountryCode] = useState(null);
+  const [selectedCountryName, setSelectedCountryName] = useState(null);
   const ref = useRef(null);
 
-  useEffect(() => {
-    setHeight(ref.current.clientHeight);
-    setWidth(ref.current.clientWidth);
-    setZoomParams(initalZoomParams);
-  }, []);
+  const getColorForTemperature = (temp) => {
+    const colorScale = scaleLinear()
+      .domain([
+        minTemperature,
+        (minTemperature + maxTemperature) / 2,
+        maxTemperature,
+      ])
+      .range(["#80adf1", "#73ff00", "#ff0000"])
+      .interpolate(interpolateRgb);
+    return colorScale(temp);
+  };
 
-  const mapData = useMemo(() => {
+  useEffect(() => {
+    // Set the GeoJSON data from the local file
+    setGeoJsonData(countriesJson);
+
     const mapData = {};
     if (!data) return mapData;
 
     for (const row of data) {
-      if (!mapData[row.country_name]) {
-        mapData[row.country_name] = {};
+      // const countryId = getCountryCodeFromName(row.country_name)
+      const countryName = row.country_name;
+
+      // console.log(countryId, countryName)
+
+      // if (!mapData[countryId]) {
+      //     mapData[countryId] = {};
+      // }
+      // mapData[countryId][moment(row.time).format("YYYY-MM-DD")] = row.value;
+
+      if (!mapData[countryName]) {
+        mapData[countryName] = {};
       }
-      mapData[row.country_name][moment(row.time).format("YYYY-MM-DD")] =
-        row.value;
+      mapData[countryName][moment(row.time).format("YYYY-MM-DD")] = row.value;
     }
-    return mapData;
+    setMapData(mapData);
   }, [data]);
 
+  const style = (feature) => {
+    // const countryId = feature.properties['ISO_A2'];
+    const countryName = feature.properties["ADMIN"];
+
+    const avgTemp =
+      // mapData?.[countryId]?.[selectedDate] ||
+      mapData?.[countryName]?.[selectedDate];
+    if (!avgTemp) {
+      console.log("no data for", countryName, selectedDate);
+    }
+
+    color;
+
+    return {
+      fillColor: avgTemp ? getColorForTemperature(avgTemp) : "transparent",
+      weight: 2,
+      opacity: 1,
+      color: "white",
+      fillOpacity: 0.7,
+      stroke: null,
+    };
+  };
+
+  const temperatureRange = useMemo(() => {
+    const range = [];
+    for (
+      let temp = Math.floor(minTemperature / 10) * 10;
+      temp <= maxTemperature;
+      temp += 10
+    ) {
+      range.push(temp);
+    }
+    return range.reverse();
+  }, [minTemperature, maxTemperature]);
+
+  const handleCountryClick = async (event) => {
+    const lat = event.latlng.lat;
+    const lng = event.latlng.lng;
+    const countryInfo = await getCountryFromCoordinates(lat, lng);
+
+    if (countryInfo) {
+      setSelectedCountryCode(countryInfo.countryCode.toUpperCase());
+      setSelectedCountryName(countryInfo.countryName);
+    }
+  };
+  const handleCloseModal = () => {
+    setSelectedCountryCode(null);
+    setSelectedCountryName(null);
+  };
+
   return (
-    <div
-      ref={ref}
-      style={{
-        width: "100%",
-        height: "calc(100% - 10px)",
-        position: "relative",
-      }}
-    >
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <MapContainer
+        center={[51.505, -0.09]}
+        zoom={1}
+        style={{
+          height: "100vh",
+          width: "100%",
+          position: "relative",
+          zIndex: 1,
+        }}
+        worldCopyJump={true}
+        maxBounds={[
+          [-90, -180],
+          [90, 180],
+        ]}
+        maxBoundsViscosity={1.0}
+        minZoom={3}
+        maxZoom={10}
+      >
+        <TileLayer
+          attribution='&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {geoJsonData && (
+          <GeoJSON
+            style={style}
+            data={geoJsonData}
+            eventHandlers={{ click: handleCountryClick }}
+          />
+        )}
+      </MapContainer>
+
       <Box
         sx={(theme) => ({
           width: "200px",
           position: "absolute",
+          zIndex: 10,
           bottom: 0,
           left: 0,
           padding: theme.spacing.md,
@@ -98,54 +157,152 @@ function MapWrapper({ data, selectedDate }) {
         })}
       >
         <Stack spacing="md">
-          {[0, 5, 10, 15, 20, 25].map((temp) => (
-            <Group spacing="md">
+          {temperatureRange.map((temp) => (
+            <Group spacing="md" key={temp}>
               <ColorSwatch color={getColorForTemperature(temp)} />
-              <Text fz="md">{temp} °C </Text>
+              <Text fz="md" color="dark.5">
+                {temp} °C
+              </Text>{" "}
             </Group>
           ))}
         </Stack>
       </Box>
-      <ComposableMap width={width} height={height} projection="geoMercator">
-        <ZoomableGroup {...zoomParams}>
-          <Geographies geography={geoUrl}>
-            {({ geographies }) =>
-              geographies.map((geo) => {
-                const country = geo.properties.name;
-                console.log(country);
-                const avgTemp = mapData?.[country]?.[selectedDate];
 
-                return (
-                  <Geography
-                    key={geo.rsmKey}
-                    geography={geo}
-                    fill={
-                      avgTemp
-                        ? getColorForTemperature(avgTemp)
-                        : geographyTheme.fill
-                    }
-                    stroke={
-                      avgTemp
-                        ? getColorForTemperature(avgTemp)
-                        : geographyTheme.stroke
-                    }
-                    style={{
-                      default: { outline: "none" },
-                      hover: {
-                        outline: "none",
-                        cursor: "pointer",
-                      },
-                      pressed: { outline: "none" },
-                    }}
-                    onClick={(e) => console.log(e)}
-                  />
-                );
-              })
-            }
-          </Geographies>
-        </ZoomableGroup>
-      </ComposableMap>
+      <Modal
+        opened={!!selectedCountryName}
+        onClose={handleCloseModal}
+        title={selectedCountryName}
+        centered
+        size="auto"
+      >
+        <Modal.Title>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=35&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=36&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=37&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=38&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=39&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=40&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=41&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=42&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=27&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=44&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=32&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=40&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=33&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=29&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+
+          <iframe
+            src={`${GRAFANA_URL}d-solo/c351f1fe-59e9-4758-b061-93603cbedc6d/noaa-gsom-dashboard?orgId=1&from=${convertDateToGrafanaTime(
+              selectedDate
+            )}&var-country_name=${selectedCountryName}&theme=dark&panelId=30&kiosk`}
+            width="650"
+            height="300"
+            frameBorder="0"
+          ></iframe>
+        </Modal.Title>
+      </Modal>
     </div>
   );
 }
+
 export default MapWrapper;
