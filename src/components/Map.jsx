@@ -69,10 +69,8 @@ function MapWrapper({ data, selectedDate, minTemperature, maxTemperature }) {
       // mapData?.[countryId]?.[selectedDate] ||
       mapData?.[countryName]?.[selectedDate];
     if (!avgTemp) {
-      console.log("no data for", countryName, selectedDate);
+      //   console.log("no data for", countryName, selectedDate);
     }
-
-    color;
 
     return {
       fillColor: avgTemp ? getColorForTemperature(avgTemp) : "transparent",
@@ -112,12 +110,12 @@ function MapWrapper({ data, selectedDate, minTemperature, maxTemperature }) {
   };
 
   return (
-    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+    <>
       <MapContainer
         center={[51.505, -0.09]}
         zoom={1}
         style={{
-          height: "100vh",
+          height: "100%",
           width: "100%",
           position: "relative",
           zIndex: 1,
@@ -301,7 +299,7 @@ function MapWrapper({ data, selectedDate, minTemperature, maxTemperature }) {
           ></iframe>
         </Modal.Title>
       </Modal>
-    </div>
+    </>
   );
 }
 
