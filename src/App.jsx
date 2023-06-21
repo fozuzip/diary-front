@@ -13,6 +13,8 @@ import DarkModeSwitch from "./components/DarkModeSwitch";
 import DateSlider from "./components/DateSlider";
 import Map from "./components/Map";
 import PlayButton from "./components/PlayButton";
+import Logo from "./components/Logo";
+
 import {
   getAnalysis,
   getEarliest,
@@ -227,6 +229,7 @@ function App() {
       header={
         <Header height={80}>
           <Group sx={{ height: "100%" }} px={20}>
+            <Logo />
             <DateSlider
               selectedDate={selectedDate}
               dates={dates}
