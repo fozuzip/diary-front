@@ -1,6 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { GeoJSON, MapContainer, TileLayer } from "react-leaflet";
-import { Box, ColorSwatch, Group, Modal, Stack, Text } from "@mantine/core";
+import {
+  Box,
+  ColorSwatch,
+  Group,
+  Modal,
+  Stack,
+  Text,
+  useMantineTheme,
+} from "@mantine/core";
 import "leaflet/dist/leaflet.css";
 import moment from "moment";
 import { scaleLinear } from "d3-scale";
@@ -109,11 +117,26 @@ function MapWrapper({ data, selectedDate, minTemperature, maxTemperature }) {
     setSelectedCountryName(null);
   };
 
+  const { colorScheme } = useMantineTheme();
+  const tileLayerProps =
+    colorScheme === "light"
+      ? {
+          url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        }
+      : {
+          url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        };
+
   return (
     <>
       <MapContainer
+        zoomControl={false}
         center={[51.505, -0.09]}
-        zoom={1}
+        zoom={2.5}
         style={{
           height: "100%",
           width: "100%",
@@ -126,13 +149,10 @@ function MapWrapper({ data, selectedDate, minTemperature, maxTemperature }) {
           [90, 180],
         ]}
         maxBoundsViscosity={1.0}
-        minZoom={3}
+        minZoom={2}
         maxZoom={10}
       >
-        <TileLayer
-          attribution='&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <TileLayer {...tileLayerProps} />
         {geoJsonData && (
           <GeoJSON
             style={style}

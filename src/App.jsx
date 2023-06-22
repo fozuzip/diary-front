@@ -3,110 +3,38 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AppShell,
   Group,
-  Header,
   LoadingOverlay,
   Select,
   Skeleton,
 } from "@mantine/core";
 
-import DarkModeSwitch from "./components/DarkModeSwitch";
-import DateSlider from "./components/DateSlider";
 import Map from "./components/Map";
-import PlayButton from "./components/PlayButton";
-import Logo from "./components/Logo";
+import Header from "./Header";
+import PlayControls from "./PlayControls";
 
 import {
   getAnalysis,
-  getEarliest,
   getGsom,
-  getLatest,
   getMaximumTemperature,
-  getMeasurements,
   getMinimumTemperature,
 } from "./utils/api";
 
-const measurementOptions = [
-  {
-    value: "Average_Temperature_decadal_average",
-    label: "Average Temperature by decade",
-    interval: "decade",
-    default: true,
-  },
-  {
-    value: "Maximum_Temperature_decadal_average",
-    label: "Maximum Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Minimum_Temperature_decadal_average",
-    label: "Minimum Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Extreme_Maximum_Temperature_decadal_average",
-    label: "Extreme Maximum Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Extreme_Minimum_Temperature_decadal_average",
-    label: "Extreme Minimum Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Average_Temperature_yearly_average",
-    label: "Average Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Maximum_Temperature_yearly_average",
-    label: "Maximum Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Minimum_Temperature_yearly_average",
-    label: "Minimum Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Extreme_Maximum_Temperature_yearly_average",
-    label: "Extreme Maximum Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Extreme_Minimum_Temperature_yearly_average",
-    label: "Extreme Minimum Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Average_Temperature",
-    label: "Average Temperature",
-    interval: "year",
-  },
-];
-
 function App() {
-  const [measurements, setMeasurements] = useState([]);
-  const [availableDateRange, setAvailableDateRange] = useState({
-    from: null,
-    to: null,
-  });
-  const [loadingOptions, setLoadingOptions] = useState(false);
-
   const [data, setData] = useState([]);
-  const [loadingData, setLoadingData] = useState(false);
-
-  const [error, setError] = useState(null);
-
-  const [selectedDateRange, setSelectedDateRange] = useState({
+  const [dateRange, setDateRange] = useState({
     from: null,
     to: null,
   });
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedMeasurement, setSelectedMeasurement] = useState(null);
+  const [measurement, setMeasurement] = useState(null);
   const [maximumTemperature, setMaximumTemperature] = useState(null);
   const [minimumTemperature, setMinimumTemperature] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  console.log(selectedDate);
+  useEffect(() => {
+    setSelectedDate(dateRange.from);
+  }, [dateRange]);
 
   const handleAnimationButtonClick = (date) => {
     if (!isPlaying && date) {
@@ -115,89 +43,39 @@ function App() {
     setIsPlaying(!isPlaying);
   };
 
-  const fetchMeasurements = useCallback(async () => {
-    const data = await getMeasurements();
-    const options = measurementOptions.filter((option) =>
-      data.includes(option.value)
-    );
-    setMeasurements(options);
-    const defaultMeasurement = options.find((m) => m.default);
-    setSelectedMeasurement(
-      defaultMeasurement ? defaultMeasurement.value : options[0].value
-    );
-  }, []);
-
   const fetchMinMaxTemperature = useCallback(async () => {
     const [maxTemp, minTemp] = await Promise.all([
-      getMaximumTemperature(selectedMeasurement),
-      getMinimumTemperature(selectedMeasurement),
+      getMaximumTemperature(measurement),
+      getMinimumTemperature(measurement),
     ]);
     setMaximumTemperature(maxTemp);
     setMinimumTemperature(minTemp);
-  }, [selectedMeasurement]);
-
-  const fetchAvailableDateRange = useCallback(async () => {
-    const [fromTimestamp, toTimestamp] = await Promise.all([
-      getEarliest(),
-      getLatest(),
-    ]);
-    const from = moment(fromTimestamp).format("YYYY-MM-DD");
-    const to = moment(toTimestamp).format("YYYY-MM-DD");
-    setAvailableDateRange({ from, to });
-    setSelectedDateRange({ from, to });
-    setSelectedDate(from);
-  }, []);
-
-  const fetchOptions = useCallback(async () => {
-    try {
-      setLoadingOptions(true);
-      await Promise.all([fetchAvailableDateRange(), fetchMeasurements()]);
-    } catch (error) {
-      setError(error);
-    } finally {
-      setLoadingOptions(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchOptions();
-  }, []);
+  }, [measurement]);
 
   const fetchData = useCallback(async () => {
-    try {
-      setLoadingData(true);
-      let data;
-      // TODO: If need to use GSOM measurements, create a list with GSOM measurements in order to use the correct endpoint if the selected measurement is a GSOM measurement
-      if (selectedMeasurement === "Average_Temperature") {
-        data = await getGsom({
-          measurement: selectedMeasurement,
-          start_date: selectedDateRange.from,
-          end_date: selectedDateRange.to,
-        });
-      } else {
-        data = await getAnalysis({
-          measurement: selectedMeasurement,
-          start_date: selectedDateRange.from,
-          end_date: selectedDateRange.to,
-        });
-      }
-      setData(data);
-    } catch (error) {
-      setError(error);
-    } finally {
-      setLoadingData(false);
+    let data;
+    const params = {
+      measurement: measurement,
+      start_date: dateRange.from,
+      end_date: dateRange.to,
+    };
+    if (measurement === "Average_Temperature") {
+      data = await getGsom(params);
+    } else {
+      data = await getAnalysis(params);
     }
+    setData(data);
   });
 
   useEffect(() => {
-    if (selectedMeasurement || selectedDateRange.from || selectedDateRange.to) {
+    if (measurement && dateRange.from && dateRange.to) {
       fetchData();
     }
-  }, [selectedDateRange, selectedMeasurement]);
+  }, [dateRange, measurement]);
 
   useEffect(() => {
-    if (selectedMeasurement) fetchMinMaxTemperature();
-  }, [selectedMeasurement]);
+    if (measurement) fetchMinMaxTemperature();
+  }, [measurement]);
 
   const dates = useMemo(
     () =>
@@ -223,40 +101,10 @@ function App() {
     }
   }, [selectedDate, isPlaying, dates]);
 
+  // TODO : loading overlay throguh context
+
   return (
-    <AppShell
-      padding={0}
-      header={
-        <Header height={80}>
-          <Group sx={{ height: "100%" }} px={20}>
-            <Logo />
-            <DateSlider
-              selectedDate={selectedDate}
-              dates={dates}
-              onChange={setSelectedDate}
-            />
-            <PlayButton
-              isPlaying={isPlaying}
-              selectedDate={selectedDate}
-              dates={dates}
-              handleAnimationButtonClick={handleAnimationButtonClick}
-            />
-            <Select
-              data={measurements}
-              value={selectedMeasurement}
-              onChange={setSelectedMeasurement}
-              placeholder="Measurement"
-              sx={{
-                minWidth: "250px",
-              }}
-            />
-            <DarkModeSwitch />
-          </Group>
-          {loadingData && <Skeleton height={4} radius="xl" />}
-        </Header>
-      }
-    >
-      <LoadingOverlay visible={loadingOptions} overlayBlur={2} />
+    <div style={{ width: "100vw", height: "100vh" }}>
       <div
         style={{
           position: "relative",
@@ -264,6 +112,38 @@ function App() {
           height: "100%",
         }}
       >
+        <div
+          style={{
+            position: "absolute",
+            width: "100%",
+            top: 0,
+            zIndex: 100,
+          }}
+        >
+          <Header
+            measurement={measurement}
+            onMeasurementChange={setMeasurement}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+            selectedDate={selectedDate}
+          />
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            width: "100%",
+            bottom: 0,
+            zIndex: 100,
+          }}
+        >
+          <PlayControls
+            selectedDate={selectedDate}
+            onChange={setSelectedDate}
+            dates={dates}
+            isPlaying={isPlaying}
+            handleAnimationButtonClick={handleAnimationButtonClick}
+          />
+        </div>
         <Map
           data={data}
           selectedDate={selectedDate}
@@ -271,7 +151,7 @@ function App() {
           maxTemperature={maximumTemperature}
         />
       </div>
-    </AppShell>
+    </div>
   );
 }
 

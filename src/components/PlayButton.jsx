@@ -1,9 +1,17 @@
-import React from 'react';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import PauseIcon from '@mui/icons-material/Pause';
-import ReplayIcon from '@mui/icons-material/Replay';
+import React from "react";
+import { ActionIcon } from "@mantine/core";
+import {
+  IconPlayerPlay,
+  IconPlayerPause,
+  IconPlayerTrackPrev,
+} from "@tabler/icons-react";
 
-function PlayButton({ isPlaying, selectedDate, dates, handleAnimationButtonClick }) {
+function PlayButton({
+  isPlaying,
+  selectedDate,
+  dates,
+  handleAnimationButtonClick,
+}) {
   const handleButtonClick = () => {
     if (!isPlaying && selectedDate === dates[dates.length - 1]) {
       handleAnimationButtonClick(dates[0]);
@@ -13,15 +21,15 @@ function PlayButton({ isPlaying, selectedDate, dates, handleAnimationButtonClick
   };
 
   return (
-    <button onClick={handleButtonClick}>
+    <ActionIcon onClick={handleButtonClick} size={36}>
       {isPlaying ? (
-        <PauseIcon />
+        <IconPlayerPause size="1rem" />
       ) : selectedDate === dates[dates.length - 1] ? (
-        <ReplayIcon />
+        <IconPlayerTrackPrev size="1rem" />
       ) : (
-        <PlayArrowIcon />
+        <IconPlayerPlay size="1rem" />
       )}
-    </button>
+    </ActionIcon>
   );
 }
 

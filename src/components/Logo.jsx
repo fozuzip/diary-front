@@ -1,6 +1,6 @@
 import { useMantineTheme } from "@mantine/core";
 
-function Logo({ width = 200, height = 60 }) {
+function Logo({ width = 200, height = 40 }) {
   const { colorScheme, colors } = useMantineTheme();
 
   return (
@@ -8,7 +8,7 @@ function Logo({ width = 200, height = 60 }) {
       width={width}
       height={height}
       viewBox="-4 10 373.5483870967742 79.44992460879375"
-      class="css-1j8o68f"
+      className="css-1j8o68f"
     >
       <defs id="SvgjsDefs1596"></defs>
       <g
