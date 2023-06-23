@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { Paper, Stack, Group, Text, Box } from "@mantine/core";
-import { IconMapPinX } from "@tabler/icons-react";
 import { getHeatColor } from "../utils/colors";
 
 function Legend({ min, max, gradient }) {

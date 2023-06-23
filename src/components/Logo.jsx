@@ -1,14 +1,16 @@
 import { useMantineTheme } from "@mantine/core";
 
-function Logo({ width = 200, height = 40 }) {
+function Logo({ width = 200, height = 40, onClick }) {
   const { colorScheme, colors } = useMantineTheme();
 
   return (
     <svg
+      onClick={onClick}
       width={width}
       height={height}
       viewBox="-4 10 373.5483870967742 79.44992460879375"
       className="css-1j8o68f"
+      style={{ cursor: "pointer" }}
     >
       <defs id="SvgjsDefs1596"></defs>
       <g

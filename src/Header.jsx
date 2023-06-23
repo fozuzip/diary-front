@@ -14,6 +14,7 @@ function Header({
   onMeasurementChange,
   dateRange,
   onDateRangeChange,
+  onLogoClick,
   selectedDate,
   setSelectedDate,
   interval,
@@ -93,7 +94,7 @@ function Header({
           justifyContent: "start",
         }}
       >
-        <Logo />
+        <Logo onClick={onLogoClick} />
       </div>
 
       <div>

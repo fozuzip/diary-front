@@ -1,13 +1,15 @@
 import moment from "moment";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useDisclosure } from "@mantine/hooks";
+
+import { getAnalysis, getGsom } from "./utils/api";
+import { measurementOptions } from "./utils/measurements";
 
 import MapArea from "./MapArea";
 import Header from "./Header";
 import PlayControls from "./PlayControls";
-
-import { getAnalysis, getGsom } from "./utils/api";
-import { measurementOptions } from "./utils/measurements";
 import CountryModal from "./CountryModal";
+import Menu from "./Menu";
 
 function App() {
   const [data, setData] = useState([]);
@@ -18,6 +20,7 @@ function App() {
     from: null,
     to: null,
   });
+  const [menuOpened, { open, close }] = useDisclosure(false);
 
   const fetchData = useCallback(async () => {
     let data;
@@ -60,6 +63,7 @@ function App() {
 
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
+      <Menu opened={menuOpened} close={close} />
       <div
         style={{
           position: "relative",
@@ -76,6 +80,7 @@ function App() {
           }}
         >
           <Header
+            onLogoClick={open}
             measurement={measurement}
             onMeasurementChange={setMeasurement}
             dateRange={dateRange}
