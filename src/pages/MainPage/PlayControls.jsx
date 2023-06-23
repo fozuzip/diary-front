@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Flex, Paper, Group } from "@mantine/core";
-import PlayButton from "./components/PlayButton";
-import DateSlider from "./components/DateSlider";
+import PlayButton from "../../components/PlayButton";
+import DateSlider from "../../components/DateSlider";
 
 function PlayControls({ selectedDate, setSelectedDate, dates, interval }) {
   const [isPlaying, setIsPlaying] = useState(false);

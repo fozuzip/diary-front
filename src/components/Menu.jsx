@@ -1,22 +1,18 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Drawer, NavLink, Divider, Flex, ActionIcon } from "@mantine/core";
-import {
-  IconLocationFilled,
-  IconMapPinFilled,
-  IconChartAreaFilled,
-  IconMushroomFilled,
-  IconX,
-} from "@tabler/icons-react";
+import { IconX } from "@tabler/icons-react";
 
-import Logo from "./components/Logo";
+import Logo from "./Logo";
 
-const links = [
-  { label: "Global Map", path: "/", Icon: IconLocationFilled },
-  { label: "Countries", path: "/", Icon: IconMapPinFilled },
-  { label: "Emmissions", Icon: IconChartAreaFilled },
-  { label: "Precipitation", Icon: IconMushroomFilled },
-];
+function Menu({ opened, close, links }) {
+  const location = useLocation();
 
-function Menu({ opened, close }) {
+  useEffect(() => {
+    close();
+  }, [location]);
+
   return (
     <Drawer
       opened={opened}
@@ -36,11 +32,15 @@ function Menu({ opened, close }) {
       <div sx={{ marginTop: "24px" }}>
         {links.map(({ label, path, Icon }) => (
           <NavLink
+            component={Link}
+            to={path}
+            key={label}
             disabled={!path}
             label={label}
             icon={<Icon size="1rem" stroke={1.5} />}
             p="lg"
             fontSize="xl"
+            active={path === location.pathname}
           />
         ))}
       </div>

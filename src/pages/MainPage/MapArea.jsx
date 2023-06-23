@@ -1,8 +1,9 @@
+import moment from "moment";
+
 import { useMemo } from "react";
 import { useMantineTheme } from "@mantine/core";
 
-import moment from "moment";
-import Map from "./components/Map";
+import Map from "../../components/Map";
 
 function MapArea({ data, selectedDate, onCountrySelect }) {
   const theme = useMantineTheme();

@@ -1,10 +1,18 @@
-import { Overlay, Box, Title, ScrollArea, Flex, Tabs } from "@mantine/core";
-import axios from "axios";
-import moment from "moment";
-import { ActionIcon } from "@mantine/core";
-import { IconX } from "@tabler/icons-react";
-import GraphanaGraph from "./components/GraphanaGraph";
 import { useEffect, useState } from "react";
+import {
+  Overlay,
+  Box,
+  Title,
+  ScrollArea,
+  Flex,
+  Tabs,
+  ActionIcon,
+} from "@mantine/core";
+import axios from "axios";
+
+import { IconX } from "@tabler/icons-react";
+
+import GraphanaGraph from "../../components/GraphanaGraph";
 
 const graphs = [
   { group: "Temprature", panels: [35, 36, 37] },

@@ -3,18 +3,14 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { Text, Select, Flex, Box, Title } from "@mantine/core";
 import { MonthPickerInput, YearPickerInput } from "@mantine/dates";
 
-import Logo from "./components/Logo";
-import DarkModeSwitch from "./components/DarkModeSwitch";
-
-import { getMeasurements, getEarliest, getLatest } from "./utils/api";
-import { measurementOptions } from "./utils/measurements";
+import { getMeasurements, getEarliest, getLatest } from "../../utils/api";
+import { measurementOptions } from "../../utils/measurements";
 
 function Header({
   measurement,
   onMeasurementChange,
   dateRange,
   onDateRangeChange,
-  onLogoClick,
   selectedDate,
   setSelectedDate,
   interval,
@@ -86,17 +82,6 @@ function Header({
         paddingTop: theme.spacing.md,
       })}
     >
-      <div
-        style={{
-          flex: 1,
-          marginRight: "auto",
-          display: "flex",
-          justifyContent: "start",
-        }}
-      >
-        <Logo onClick={onLogoClick} />
-      </div>
-
       <div>
         <Flex gap="md" align="center">
           <Text>Showing</Text>
@@ -145,17 +130,6 @@ function Header({
           </Flex>
         )}
       </div>
-
-      <Box
-        sx={{
-          flex: 1,
-          marginLeft: "auto",
-          display: "flex",
-          justifyContent: "end",
-        }}
-      >
-        <DarkModeSwitch />
-      </Box>
     </Flex>
   );
 }

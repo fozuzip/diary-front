@@ -1,6 +1,6 @@
 import { useMantineTheme } from "@mantine/core";
 
-function Logo({ width = 200, height = 40, onClick }) {
+function Logo({ width = 200, height = 40, onClick = () => null }) {
   const { colorScheme, colors } = useMantineTheme();
 
   return (
