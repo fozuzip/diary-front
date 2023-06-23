@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Flex, Paper, Group } from "@mantine/core";
 import PlayButton from "../../components/PlayButton";
 import DateSlider from "../../components/DateSlider";
@@ -29,6 +29,18 @@ function PlayControls({ selectedDate, setSelectedDate, dates, interval }) {
     }
   }, [selectedDate, isPlaying, dates]);
 
+  const handleSliderAction = (date) => {
+    setIsPlaying(false);
+    setSelectedDate(date);
+  };
+
+  useEffect(() => {
+    setIsPlaying(false);
+    if (dates.length > 0) {
+      setSelectedDate(dates[0]);
+    }
+  }, [dates]);
+
   return (
     <Flex
       justify="center"
@@ -47,7 +59,7 @@ function PlayControls({ selectedDate, setSelectedDate, dates, interval }) {
           <DateSlider
             selectedDate={selectedDate}
             dates={dates}
-            onChange={setSelectedDate}
+            onChange={handleSliderAction}
             interval={interval}
           />
         </Group>

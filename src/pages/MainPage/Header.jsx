@@ -23,7 +23,9 @@ function Header({
   });
 
   useEffect(() => {
-    setSelectedDate(dateRange.from);
+    if (selectedDate) {
+      setSelectedDate(dateRange.from);
+    }
   }, [dateRange]);
 
   const DatePickerComponent = useMemo(() => {
@@ -57,7 +59,7 @@ function Header({
     );
   }, []);
 
-  const fetchAvailableDateRange = useCallback(async () => {
+  const fetchAvailableDateRange = async () => {
     const [fromTimestamp, toTimestamp] = await Promise.all([
       getEarliest(),
       getLatest(),
@@ -66,7 +68,7 @@ function Header({
     const to = moment(toTimestamp).format("YYYY-MM-DD");
     setAvailableDateRange({ from, to });
     onDateRangeChange({ from, to });
-  }, []);
+  };
 
   useEffect(() => {
     fetchMeasurements();
@@ -91,12 +93,13 @@ function Header({
             data={measurements}
             value={measurement}
             onChange={onMeasurementChange}
+            disabled={!measurements}
           />
           <Text>From</Text>
           <DatePickerComponent
             w={200}
             placeholder="Starting Date"
-            value={new Date(dateRange.from)}
+            value={dateRange.from ? new Date(dateRange.from) : null}
             onChange={(value) =>
               onDateRangeChange((dates) => ({
                 ...dates,
@@ -105,12 +108,13 @@ function Header({
             }
             minDate={new Date(availableDateRange.from)}
             maxDate={new Date(availableDateRange.to)}
+            disabled={!availableDateRange.from}
           />
           <Text>To: </Text>
           <DatePickerComponent
             w={200}
             placeholder="End Date"
-            value={new Date(dateRange.to)}
+            value={dateRange.to ? new Date(dateRange.to) : null}
             onChange={(value) =>
               onDateRangeChange((dates) => ({
                 ...dates,
@@ -119,6 +123,7 @@ function Header({
             }
             minDate={new Date(availableDateRange.from)}
             maxDate={new Date(availableDateRange.to)}
+            disabled={!availableDateRange.to}
           />
         </Flex>
         {showDate && (

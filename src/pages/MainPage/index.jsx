@@ -1,13 +1,14 @@
 import moment from "moment";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { getAnalysis, getGsom } from "../../utils/api";
-import { measurementOptions } from "../../utils/measurements";
-
+import { LoadingOverlay } from "@mantine/core";
 import MapArea from "./MapArea";
 import Header from "./Header";
 import PlayControls from "./PlayControls";
 import CountryModal from "./CountryModal";
+
+import { getAnalysis, getGsom } from "../../utils/api";
+import { measurementOptions } from "../../utils/measurements";
 
 function MainPage() {
   const [data, setData] = useState([]);
@@ -18,7 +19,16 @@ function MainPage() {
     from: null,
     to: null,
   });
+
+  const [isFetching, setIsFetching] = useState(false);
+  const showSpinner = useMemo(() => {
+    if (isFetching) return true;
+    if (!data || data.length === 0) return true;
+    return false;
+  }, [data, isFetching]);
+
   const fetchData = useCallback(async () => {
+    setIsFetching(true);
     let data;
     const params = {
       measurement: measurement,
@@ -31,10 +41,12 @@ function MainPage() {
       data = await getAnalysis(params);
     }
     setData(data);
+    setIsFetching(false);
   });
 
   useEffect(() => {
     if (measurement && dateRange.from && dateRange.to) {
+      console.log("fetching", measurement, dateRange.from, dateRange.to);
       fetchData();
     }
   }, [dateRange, measurement]);
@@ -54,8 +66,6 @@ function MainPage() {
       ),
     [data]
   );
-
-  // TODO : loading overlay throguh context
 
   return (
     <div
@@ -108,6 +118,7 @@ function MainPage() {
           onClose={() => setSelectedCountry(null)}
         />
       )}
+      <LoadingOverlay visible={showSpinner} overlayBlur={2} zIndex={200} />
       <MapArea
         data={data}
         selectedDate={selectedDate}

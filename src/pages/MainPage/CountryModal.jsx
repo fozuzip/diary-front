@@ -65,7 +65,7 @@ function CountryModal({ country, dateRange, onClose }) {
                 {panels.map((id) => (
                   <div key={id} style={{ marginBottom: "16px" }}>
                     <GraphanaGraph
-                      country={country.id}
+                      countryId={country.id}
                       from={dateRange.from}
                       to={dateRange.to}
                       panelId={id}
