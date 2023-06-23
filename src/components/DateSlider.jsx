@@ -2,11 +2,7 @@ import moment from "moment";
 import { useMemo } from "react";
 import { Slider, Text } from "@mantine/core";
 
-function DateSlider({ selectedDate, dates, onChange }) {
-  const displayDate = useMemo(
-    () => (selectedDate ? moment(selectedDate).format("MMM YYYY") : "-"),
-    [selectedDate]
-  );
+function DateSlider({ selectedDate, dates, onChange, interval }) {
   const sliderValue = useMemo(
     () => (selectedDate ? dates.indexOf(selectedDate) : 0),
     [selectedDate, dates]
@@ -21,17 +17,25 @@ function DateSlider({ selectedDate, dates, onChange }) {
     onChange(dates[value]);
   };
 
-  const minDate = useMemo(
-    () => (dates && dates.length > 0 ? dates[0] : ""),
-    [dates]
+  const currDate = useMemo(
+    () =>
+      dates && dates.length > 0
+        ? moment(selectedDate).format(interval === "month" ? "MM/YYYY" : "YYYY")
+        : "",
+    [selectedDate]
   );
   const maxDate = useMemo(
-    () => (dates && dates.length > 1 ? dates[dates.length - 1] : ""),
+    () =>
+      dates && dates.length > 1
+        ? moment(dates[dates.length - 1]).format(
+            interval === "month" ? "MM/YYYY" : "YYYY"
+          )
+        : "",
     [dates]
   );
   return (
     <>
-      <Text fz="xs">{minDate}</Text>
+      <Text fz="xs">{currDate}</Text>
       <Slider
         color="red"
         value={sliderValue}

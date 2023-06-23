@@ -7,6 +7,7 @@ import Logo from "./components/Logo";
 import DarkModeSwitch from "./components/DarkModeSwitch";
 
 import { getMeasurements, getEarliest, getLatest } from "./utils/api";
+import { measurementOptions } from "./utils/measurements";
 
 function Header({
   measurement,
@@ -14,6 +15,9 @@ function Header({
   dateRange,
   onDateRangeChange,
   selectedDate,
+  setSelectedDate,
+  interval,
+  showDate,
 }) {
   const [measurements, setMeasurements] = useState([]);
   const [availableDateRange, setAvailableDateRange] = useState({
@@ -21,16 +25,13 @@ function Header({
     to: null,
   });
 
-  const interval = useMemo(
-    () =>
-      measurement &&
-      measurementOptions.find((option) => option.value === measurement)
-        .interval,
-    [measurement]
-  );
+  useEffect(() => {
+    setSelectedDate(dateRange.from);
+  }, [dateRange]);
+
   const DatePickerComponent = useMemo(() => {
     switch (interval) {
-      case "monthly":
+      case "month":
         return MonthPickerInput;
       default:
         return YearPickerInput;
@@ -42,7 +43,7 @@ function Header({
       return "";
     } else {
       return moment(selectedDate).format(
-        interval === "monthly" ? "MMMM YYYY" : "YYYY"
+        interval === "month" ? "MMMM YYYY" : "YYYY"
       );
     }
   }, [interval, selectedDate]);
@@ -77,14 +78,24 @@ function Header({
 
   return (
     <Flex
-      justify="space-between"
+      justify="center"
       sx={(theme) => ({
         paddingLeft: theme.spacing.md,
         paddingRight: theme.spacing.md,
         paddingTop: theme.spacing.md,
       })}
     >
-      <Logo />
+      <div
+        style={{
+          flex: 1,
+          marginRight: "auto",
+          display: "flex",
+          justifyContent: "start",
+        }}
+      >
+        <Logo />
+      </div>
+
       <div>
         <Flex gap="md" align="center">
           <Text>Showing</Text>
@@ -101,7 +112,6 @@ function Header({
             placeholder="Starting Date"
             value={new Date(dateRange.from)}
             onChange={(value) =>
-              console.log(value) ||
               onDateRangeChange((dates) => ({
                 ...dates,
                 from: moment(value).format("YYYY-MM-DD"),
@@ -125,78 +135,28 @@ function Header({
             maxDate={new Date(availableDateRange.to)}
           />
         </Flex>
-        <Flex
-          justify="center"
-          sx={(theme) => ({ paddingTop: theme.spacing.md })}
-        >
-          <Title order={2}>{displayDate}</Title>
-        </Flex>
+        {showDate && (
+          <Flex
+            justify="center"
+            sx={(theme) => ({ paddingTop: theme.spacing.md })}
+          >
+            <Title order={2}>{displayDate}</Title>
+          </Flex>
+        )}
       </div>
 
-      <Box>
+      <Box
+        sx={{
+          flex: 1,
+          marginLeft: "auto",
+          display: "flex",
+          justifyContent: "end",
+        }}
+      >
         <DarkModeSwitch />
       </Box>
     </Flex>
   );
 }
-
-const measurementOptions = [
-  {
-    value: "Average_Temperature_decadal_average",
-    label: "Average Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Maximum_Temperature_decadal_average",
-    label: "Maximum Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Minimum_Temperature_decadal_average",
-    label: "Minimum Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Extreme_Maximum_Temperature_decadal_average",
-    label: "Extreme Maximum Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Extreme_Minimum_Temperature_decadal_average",
-    label: "Extreme Minimum Temperature by decade",
-    interval: "decade",
-  },
-  {
-    value: "Average_Temperature_yearly_average",
-    label: "Average Temperature by year",
-    interval: "year",
-    default: true,
-  },
-  {
-    value: "Maximum_Temperature_yearly_average",
-    label: "Maximum Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Minimum_Temperature_yearly_average",
-    label: "Minimum Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Extreme_Maximum_Temperature_yearly_average",
-    label: "Extreme Maximum Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Extreme_Minimum_Temperature_yearly_average",
-    label: "Extreme Minimum Temperature by year",
-    interval: "year",
-  },
-  {
-    value: "Average_Temperature",
-    label: "Average Temperature",
-    interval: "year",
-  },
-];
 
 export default Header;

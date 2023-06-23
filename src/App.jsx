@@ -1,56 +1,23 @@
 import moment from "moment";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  AppShell,
-  Group,
-  LoadingOverlay,
-  Select,
-  Skeleton,
-} from "@mantine/core";
 
-import Map from "./components/Map";
+import MapArea from "./MapArea";
 import Header from "./Header";
 import PlayControls from "./PlayControls";
 
-import {
-  getAnalysis,
-  getGsom,
-  getMaximumTemperature,
-  getMinimumTemperature,
-} from "./utils/api";
+import { getAnalysis, getGsom } from "./utils/api";
+import { measurementOptions } from "./utils/measurements";
+import CountryModal from "./CountryModal";
 
 function App() {
   const [data, setData] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [measurement, setMeasurement] = useState(null);
+  const [selectedCountry, setSelectedCountry] = useState(null);
   const [dateRange, setDateRange] = useState({
     from: null,
     to: null,
   });
-
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [measurement, setMeasurement] = useState(null);
-  const [maximumTemperature, setMaximumTemperature] = useState(null);
-  const [minimumTemperature, setMinimumTemperature] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  console.log(selectedDate);
-  useEffect(() => {
-    setSelectedDate(dateRange.from);
-  }, [dateRange]);
-
-  const handleAnimationButtonClick = (date) => {
-    if (!isPlaying && date) {
-      setSelectedDate(date);
-    }
-    setIsPlaying(!isPlaying);
-  };
-
-  const fetchMinMaxTemperature = useCallback(async () => {
-    const [maxTemp, minTemp] = await Promise.all([
-      getMaximumTemperature(measurement),
-      getMinimumTemperature(measurement),
-    ]);
-    setMaximumTemperature(maxTemp);
-    setMinimumTemperature(minTemp);
-  }, [measurement]);
 
   const fetchData = useCallback(async () => {
     let data;
@@ -73,9 +40,13 @@ function App() {
     }
   }, [dateRange, measurement]);
 
-  useEffect(() => {
-    if (measurement) fetchMinMaxTemperature();
-  }, [measurement]);
+  const interval = useMemo(
+    () =>
+      measurement &&
+      measurementOptions.find((option) => option.value === measurement)
+        .interval,
+    [measurement]
+  );
 
   const dates = useMemo(
     () =>
@@ -84,22 +55,6 @@ function App() {
       ),
     [data]
   );
-
-  useEffect(() => {
-    if (isPlaying) {
-      const currentIndex = dates.indexOf(selectedDate);
-      if (currentIndex < dates.length - 1) {
-        const delay = 10000 / dates.length;
-        const timeoutId = setTimeout(
-          () => setSelectedDate(dates[currentIndex + 1]),
-          delay
-        );
-        return () => clearTimeout(timeoutId);
-      } else {
-        setIsPlaying(false);
-      }
-    }
-  }, [selectedDate, isPlaying, dates]);
 
   // TODO : loading overlay throguh context
 
@@ -117,7 +72,7 @@ function App() {
             position: "absolute",
             width: "100%",
             top: 0,
-            zIndex: 100,
+            zIndex: 210,
           }}
         >
           <Header
@@ -126,6 +81,9 @@ function App() {
             dateRange={dateRange}
             onDateRangeChange={setDateRange}
             selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            interval={interval}
+            showDate={!selectedCountry}
           />
         </div>
         <div
@@ -133,22 +91,29 @@ function App() {
             position: "absolute",
             width: "100%",
             bottom: 0,
-            zIndex: 100,
+            zIndex: 210,
           }}
         >
-          <PlayControls
-            selectedDate={selectedDate}
-            onChange={setSelectedDate}
-            dates={dates}
-            isPlaying={isPlaying}
-            handleAnimationButtonClick={handleAnimationButtonClick}
-          />
+          {!selectedCountry && (
+            <PlayControls
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+              dates={dates}
+              interval={interval}
+            />
+          )}
         </div>
-        <Map
+        {selectedCountry && (
+          <CountryModal
+            country={selectedCountry}
+            dateRange={dateRange}
+            onClose={() => setSelectedCountry(null)}
+          />
+        )}
+        <MapArea
           data={data}
           selectedDate={selectedDate}
-          minTemperature={minimumTemperature}
-          maxTemperature={maximumTemperature}
+          onCountrySelect={setSelectedCountry}
         />
       </div>
     </div>
