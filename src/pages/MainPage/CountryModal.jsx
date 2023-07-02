@@ -10,7 +10,7 @@ import {
   useMantineTheme,
 } from "@mantine/core";
 import axios from "axios";
-import { IconX } from "@tabler/icons-react";
+import { IconX, IconRefresh } from "@tabler/icons-react";
 import GrafanaPanel from "../../components/GrafanaPanel";
 
 const graphs = [
@@ -23,6 +23,12 @@ const graphs = [
 
 function CountryModal({ country, dateRange, onClose }) {
   const { colorScheme } = useMantineTheme();
+  const [activeTab, setActiveTab] = useState(graphs[0].group);
+
+  const [key, setKey] = useState(0);
+  const refreshTabs = () => {
+    setKey((prevKey) => prevKey + 1);
+  };
 
   const [flag, setFlag] = useState(null);
   useEffect(() => {
@@ -52,11 +58,22 @@ function CountryModal({ country, dateRange, onClose }) {
             )}
             <Title>{country.name}</Title>
           </Flex>
-          <ActionIcon onClick={onClose} size={36}>
-            <IconX size="2rem" />
-          </ActionIcon>
+          <Flex gap="md" align="center">
+            <ActionIcon onClick={refreshTabs} size={36}>
+              <IconRefresh size="2rem" />
+            </ActionIcon>
+            <ActionIcon onClick={onClose} size={36}>
+              <IconX size="2rem" />
+            </ActionIcon>
+          </Flex>
         </Flex>
-        <Tabs color="teal" defaultValue={graphs[0].group}>
+        <Tabs
+          keepMounted={false}
+          color="teal"
+          value={activeTab}
+          onTabChange={setActiveTab}
+          key={key}
+        >
           <Tabs.List>
             {graphs.map(({ group }) => (
               <Tabs.Tab key={group} value={group}>
