@@ -1,8 +1,10 @@
 import { useMemo } from "react";
-import { Paper, Stack, Group, Text, Box } from "@mantine/core";
+import { Paper, Stack, Group, Text, Box, useMantineTheme } from "@mantine/core";
 import { getHeatColor } from "../utils/colors";
 
 function Legend({ min, max, gradient }) {
+  const { colorScheme, colors } = useMantineTheme();
+
   const getColor = getHeatColor(gradient, min, max);
 
   const temperatureRange = useMemo(
@@ -51,6 +53,21 @@ function Legend({ min, max, gradient }) {
             <Text fz="xs">{temp} °C</Text>
           </Group>
         ))}
+        <Group spacing="md" pt="sm">
+          <Box
+            style={{
+              background: colorScheme === "light" ? "#ffffff" : "#090909",
+              width: "16px",
+              height: "24px",
+              border:
+                colorScheme === "light"
+                  ? `1px solid ${colors.dark[2]}`
+                  : "none",
+              borderRadius: "5px",
+            }}
+          />
+          <Text fz="xs">N/A</Text>
+        </Group>
       </Stack>
     </Paper>
   );
