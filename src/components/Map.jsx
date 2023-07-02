@@ -13,8 +13,8 @@ function Map({ getValue, gradient, onCountrySelect, minValue, maxValue }) {
   const getColor = getHeatColor(gradient, minValue, maxValue);
 
   const style = (feature) => {
-    const countryId = feature.properties["ISO_A2"];
-    const avgTemp = getValue(countryId);
+    const countryIso = feature.properties["ISO_A2"];
+    const avgTemp = getValue(countryIso);
 
     const heatColor = avgTemp ? getColor(avgTemp) : null;
     // const strokeColor = avgTemp ? rgbToHex(darkenColor(heatColor, 0.2)) : null;
@@ -33,7 +33,6 @@ function Map({ getValue, gradient, onCountrySelect, minValue, maxValue }) {
     const lat = event.latlng.lat;
     const lng = event.latlng.lng;
     const countryInfo = await getCountryFromCoordinates(lat, lng);
-
     if (countryInfo) {
       onCountrySelect({
         id: countryInfo.countryCode.toUpperCase(),
@@ -74,7 +73,7 @@ function Map({ getValue, gradient, onCountrySelect, minValue, maxValue }) {
           [90, 180],
         ]}
         maxBoundsViscosity={1.0}
-        minZoom={2}
+        minZoom={3}
         maxZoom={10}
       >
         <TileLayer {...tileLayerProps} />
