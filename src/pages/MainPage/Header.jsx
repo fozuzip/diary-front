@@ -62,13 +62,18 @@ function Header({
       getEarliest(),
       getLatest(),
     ]);
-    const from = moment(fromTimestamp).format("YYYY-MM-DD");
+    let from = moment(fromTimestamp).format("YYYY-MM-DD");
     const to = moment(toTimestamp).format("YYYY-MM-DD");
+
     setAvailableDateRange({ from, to });
+
+    // set date range from 1950 to now
+    from = from < "1950-01-01" ? "1950-01-01" : from;
     onDateRangeChange({ from, to });
   }, []);
 
   useEffect(() => {
+    console.log("HERE");
     fetchMeasurements();
     fetchAvailableDateRange();
   }, []);
