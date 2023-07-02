@@ -1,5 +1,14 @@
-import { useEffect, useState } from "react";
-import { ActionIcon, Box, Flex, Overlay, ScrollArea, Tabs, Title } from "@mantine/core";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ActionIcon,
+  Box,
+  Flex,
+  Overlay,
+  ScrollArea,
+  Tabs,
+  Title,
+  useMantineTheme,
+} from "@mantine/core";
 import axios from "axios";
 import { IconX } from "@tabler/icons-react";
 import GrafanaPanel from "../../components/GrafanaPanel";
@@ -13,6 +22,8 @@ const graphs = [
 ];
 
 function CountryModal({ country, dateRange, onClose }) {
+  const { colorScheme } = useMantineTheme();
+
   const [flag, setFlag] = useState(null);
   useEffect(() => {
     axios
@@ -20,8 +31,12 @@ function CountryModal({ country, dateRange, onClose }) {
       .then((res) => setFlag(res.data[0].flags));
   }, [country.id]);
 
+  const overlayThemedProps = useMemo(
+    () => (colorScheme === "light" ? { color: "#fff", opacity: 0.1 } : {}),
+    [colorScheme]
+  );
   return (
-    <Overlay blur={15}>
+    <Overlay blur={15} {...overlayThemedProps}>
       <Box w={1800} h={"100%"} p="lg" sx={{ margin: "auto" }}>
         <Flex
           justify="space-between"
@@ -32,7 +47,9 @@ function CountryModal({ country, dateRange, onClose }) {
           })}
         >
           <Flex gap="md" align="center">
-            {flag && <img width={50} height={32} src={flag.png} alt={flag.alt} />}
+            {flag && (
+              <img width={50} height={32} src={flag.png} alt={flag.alt} />
+            )}
             <Title>{country.name}</Title>
           </Flex>
           <ActionIcon onClick={onClose} size={36}>
@@ -50,7 +67,13 @@ function CountryModal({ country, dateRange, onClose }) {
           <ScrollArea h={700}>
             {graphs.map(({ group, panels }) => (
               <Tabs.Panel key={group} value={group} pt="xs">
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "16px",
+                  }}
+                >
                   {panels.map((id) => (
                     <div key={id}>
                       <GrafanaPanel
