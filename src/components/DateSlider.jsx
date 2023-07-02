@@ -9,7 +9,7 @@ function DateSlider({ selectedDate, dates, onChange, interval }) {
   );
 
   const sliderMax = useMemo(
-    () => (selectedDate ? dates.length - 1 : 10),
+    () => (selectedDate && dates.length > 1 ? dates.length - 1 : 10),
     [selectedDate, dates]
   );
 
@@ -22,7 +22,7 @@ function DateSlider({ selectedDate, dates, onChange, interval }) {
       dates && dates.length > 0
         ? moment(selectedDate).format(interval === "month" ? "MM/YYYY" : "YYYY")
         : "",
-    [selectedDate]
+    [selectedDate, dates]
   );
   const maxDate = useMemo(
     () =>
@@ -37,6 +37,7 @@ function DateSlider({ selectedDate, dates, onChange, interval }) {
     <>
       <Text fz="xs">{currDate}</Text>
       <Slider
+        disabled={!dates || dates.length === 0}
         color="red"
         value={sliderValue}
         onChange={updateDate}

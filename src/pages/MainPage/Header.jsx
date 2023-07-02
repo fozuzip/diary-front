@@ -91,12 +91,13 @@ function Header({
             data={measurements}
             value={measurement}
             onChange={onMeasurementChange}
+            disabled={!measurements}
           />
           <Text>From</Text>
           <DatePickerComponent
             w={200}
             placeholder="Starting Date"
-            value={new Date(dateRange.from)}
+            value={dateRange.from ? new Date(dateRange.from) : null}
             onChange={(value) =>
               onDateRangeChange((dates) => ({
                 ...dates,
@@ -105,12 +106,13 @@ function Header({
             }
             minDate={new Date(availableDateRange.from)}
             maxDate={new Date(availableDateRange.to)}
+            disabled={!availableDateRange.from}
           />
           <Text>To: </Text>
           <DatePickerComponent
             w={200}
             placeholder="End Date"
-            value={new Date(dateRange.to)}
+            value={dateRange.to ? new Date(dateRange.to) : null}
             onChange={(value) =>
               onDateRangeChange((dates) => ({
                 ...dates,
@@ -119,6 +121,7 @@ function Header({
             }
             minDate={new Date(availableDateRange.from)}
             maxDate={new Date(availableDateRange.to)}
+            disabled={!availableDateRange.to}
           />
         </Flex>
         {showDate && (
